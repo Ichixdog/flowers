@@ -34,6 +34,15 @@ export class HeaderComponent implements OnInit{
   }
 
   ngOnInit(): void {
+
+    this.cartService.getCartCount().subscribe((data: {count: number} | DefaultResponseType) => {
+      if((data as DefaultResponseType).error !== undefined){
+        throw new Error(((data as DefaultResponseType).message))
+      }
+      console.log(data)
+      this.count = (data as {count: number}).count
+      console.log(this.count)
+    })
     
     
     this.cartService.count$.subscribe(count => {
@@ -70,11 +79,25 @@ export class HeaderComponent implements OnInit{
     this.authService.logout().subscribe({
       next: () => {
         this.doLogout()
-        this.count = 0
+        this.cartService.getCartCount().subscribe((data: {count: number} | DefaultResponseType) => {
+          if((data as DefaultResponseType).error !== undefined){
+            throw new Error(((data as DefaultResponseType).message))
+          }
+          console.log(data)
+          this.count = (data as {count: number}).count
+          console.log(this.count)
+        })
       },
       error: () => {
         this.doLogout()
-        this.count = 0
+        this.cartService.getCartCount().subscribe((data: {count: number} | DefaultResponseType) => {
+          if((data as DefaultResponseType).error !== undefined){
+            throw new Error(((data as DefaultResponseType).message))
+          }
+          console.log(data)
+          this.count = (data as {count: number}).count
+          console.log(this.count)
+        })
       } 
     })
   }

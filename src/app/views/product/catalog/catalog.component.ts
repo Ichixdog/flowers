@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Route, Router } from '@angular/router';
 import { debounceTime } from 'rxjs';
 import { AuthService } from 'src/app/core/auth/auth.service';
 import { CartService } from 'src/app/shared/services/cart.service';
@@ -44,10 +44,22 @@ export class CatalogComponent implements OnInit {
     private cartService: CartService,
     private favoriteService: FavoriteService,
     private authService: AuthService,
-    private eRef: ElementRef
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (!params['page']) {
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { ...params, page: 1 },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      }
+    });
+
+
     this.cartService
       .getCart()
       .subscribe((data: CartType | DefaultResponseType) => {
