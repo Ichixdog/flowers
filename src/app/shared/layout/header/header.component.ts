@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, inject, Input, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/core/auth/auth.service';
@@ -16,7 +16,7 @@ import { debounceTime } from 'rxjs';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit{
 
   private _snackBar = inject(MatSnackBar)
   serverStaticPath = environment.serverStaticPath;
@@ -29,44 +29,52 @@ export class HeaderComponent implements OnInit {
 
   @Input() categories: CategoryWithTypeType[] = []
 
-  constructor(private authService: AuthService, private router: Router, private cartService: CartService, private productService: ProductService) {
+  constructor(private authService: AuthService, private router: Router, private cartService: CartService, private productService: ProductService, private cdr: ChangeDetectorRef) {
     this.isLogged = authService.getIsLoggedIn()
   }
 
   ngOnInit(): void {
+    
+    
+    this.cartService.count$.subscribe(count => {
+      this.count = count
+    })
 
     this.searchField.valueChanges.pipe(debounceTime(500)).subscribe(value => {
       if(value && value.length > 2){
-            this.productService.searchProducts(value).subscribe((data: ProductType[]) => {
-              this.products = data
-              this.showedSearch = true
-            })
-          } else{
-            this.products = []
-          }
+        this.productService.searchProducts(value).subscribe((data: ProductType[]) => {
+          this.products = data
+          this.showedSearch = true
+        })
+      } else{
+        this.products = []
+      }
     })
 
     this.authService.isLogged$.subscribe((isLoggedIn: boolean) =>{
       this.isLogged = isLoggedIn
-    })
-
-    this.cartService.getCartCount().subscribe((data: {count: number} | DefaultResponseType) => {
-      if((data as DefaultResponseType).error !== undefined){
-        throw new Error(((data as DefaultResponseType).message))
+      if(this.isLogged){
+        this.cartService.getCartCount().subscribe((data: {count: number} | DefaultResponseType) => {
+          if((data as DefaultResponseType).error !== undefined){
+            throw new Error(((data as DefaultResponseType).message))
+          }
+          console.log(data)
+          this.count = (data as {count: number}).count
+          console.log(this.count)
+        })
       }
-      this.count = (data as {count: number}).count
     })
-
-    this.cartService.count$.subscribe(count => this.count = count)
   }
 
   logout(){
     this.authService.logout().subscribe({
       next: () => {
         this.doLogout()
+        this.count = 0
       },
       error: () => {
         this.doLogout()
+        this.count = 0
       } 
     })
   }
